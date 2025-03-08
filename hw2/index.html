@@ -32,7 +32,7 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: (TODO) <a href="https://cal-cs184-student.github.io/hw-webpages-californiaburritowp/">cal-cs184-student.github.io/hw-webpages-californiaburritowp/</a>
 
 		<br>
 		
@@ -48,8 +48,27 @@
 		-->
 
 		<h2>Overview</h2>
-		(TODO) This write-up describes the implementation of various tasks related to Bezier curves, mesh processing, and Loop subdivision.
-
+		<p>This write-up details my implementation of several algorithms and techniques in order to better render and work with triangle mesh objects,
+			as well as the challenges I encountered while coding and their solutions. Some focuses were using Bezier curves to represent curved shapes, 
+			Phong shading to improve quality, and mesh processing functions like flipping, splitting, and upsampling for various other purposes.
+		</p>
+		<p>For the Bezier curve and surface tasks, I implemented de Casteljau’s algorithm to recursively evaluate control points and generate 
+			smooth curves and surfaces. In the mesh processing tasks, I implemented area-weighted vertex normals to achieve smoother (Phong) shading, 
+			along with mesh modification functions such as edge flips and edge splits. The loop subdivision task required splitting edges, flipping necessary edges, 
+			and updating vertex positions to refine the mesh. 
+		</p>
+		<p> The major challenges I encountered were in debugging and sometimes in fully understanding the intended function of the algorithms I was implementing. 
+			Carefully structuring the recursive steps and my variable names, as well as splitting up pieces of algorithms and checking pointers while running the 
+			program helped me to overcome these issues.
+        </p> 
+        <p>Through this homework, I deepened my understanding of recursive interpolation, half-edge data structures, mesh processing, and subdivision techniques 
+			used commonly in computer graphics. The hands-on experience with these algorithms also reinforced my importance of precision and careful debugging, 
+			improving my coding process.
+		</p>
+        
+        
+        
+    
 		<h2>Section I: Bezier Curves and Surfaces</h2>
 
 		<h3>Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
@@ -102,11 +121,10 @@
 		<p>To extend de Casteljau’s algorithm to a Bezier surface, we essentially run the single parameter variation twice, now needing two parameters: u and v, and a n x n control grid instead of just parameter t and n control points. Using the de Casteljau algorithm as described in part 1, each row of points in the control grid forms its own Bezier curve based on parameter u. Applying the de Casteljau algorithm to the n rows for any given value of u gives us n intermediate points, which can then be inputted again into algorithm using parameter v to find a single point in the Bezier surface. Just like before, calculating the values created by adjusting our parameters between 0 and 1 will then give us all the points on our Bezier surface. 
 		</p>
 		<p>To implement this, I modified evaluateStep, evaluate1D, and evaluate. </p>
-		<p>First, evaluateStep does essentially the same thing as in task 1: that is, it linearly interpolates n points on parameter t to return n – 1 points. </p>
-		<p>Then, evaluate1D recursively applies evaluateStep to n points to find the single remaining point from a given value of the parameter t.</p>
-		<p>Last, evaluate calls evaluate1D on each row using parameter u, then calls evaluate1D on the resulting n points using parameter v to return a point on the Bezier surface.</p>
-		
-		<p>In my code, I use it to define evaluateStep, which, given n points and parameter t, simply does n - 1 linear interpolations and returns the next subdivision level’s n – 1 points. Once it has been called enough times and one final point remains, this point is on the Bezier curve. By adjusting the parameter t between 0 and 1, we can then plot out all the points on the curve. See below for a visual representation of the process with 6 control points.</p>
+		<p>First, evaluateStep does essentially the same thing as in task 1: that is, it linearly interpolates n points on parameter t to return n – 1 points.
+		Then, evaluate1D recursively applies evaluateStep to n points to find the single remaining point from a given value of the parameter t.
+		Last, evaluate calls evaluate1D on each row using parameter u, then calls evaluate1D on the resulting n points using parameter v to return a point on the Bezier surface.</p>
+		<p>See below for a teapot evaluated by my implementation of Bezier surfaces.</p>
 		<figure>
 			<img src="8.png" alt="Teapot" style="width:50%"/>
 			<figcaption>"...short and stout..."</figcaption>
@@ -124,21 +142,21 @@
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="9.png" width="400px"/>
-				  <figcaption>No mesh, no smoothing.</figcaption>
+				  <figcaption>No mesh; no smoothing.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="10.png" width="400px"/>
-				  <figcaption>Mesh, no smoothing.</figcaption>
+				  <figcaption>Mesh; no smoothing.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="11.png" width="400px"/>
-				  <figcaption>No mesh, smoothing.</figcaption>
+				  <figcaption>No mesh; smoothing.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="12.png" width="400px"/>
-				  <figcaption>Mesh, smoothing.</figcaption>
+				  <figcaption>Mesh; smoothing.</figcaption>
 				</td>
 			  </tr>
 			</table>
@@ -183,7 +201,7 @@
 		</p>
 		<p>A combination of process I used to name each structure, meticulously combing through the logic of how new/old structures should look like, and lots of luck helped my implementation to work without any major debugging mishaps.
 		</p>
-		<p>Screenshots of a mesh before and after some edge splits (below):
+		<p>Screenshots of a cube mesh before and after some edge splits, then of a new mesh before and after some edge flips, splits, and then (from another angle to showcase changes better) both, respectively:
 		</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
@@ -250,11 +268,11 @@
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="27.png" width="400px"/>
-				  <figcaption>Basic teapot.</figcaption>
+				  <figcaption>Cube with many extra splits on ONE face.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="28.png" width="400px"/>
-				  <figcaption>A few flipped edges.</figcaption>
+				  <figcaption>Upsampled cube - you can see the split face is much flatter.</figcaption>
 				</td>
 			  </tr>
 			</table>
@@ -269,41 +287,41 @@
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="23.png" width="400px"/>
-				  <figcaption>No mesh, no smoothing.</figcaption>
+				  <figcaption>Unprocessed Cube.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="24.png" width="400px"/>
-				  <figcaption>Mesh, no smoothing.</figcaption>
+				  <figcaption>Level 1.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="25.png" width="400px"/>
-				  <figcaption>No mesh, smoothing.</figcaption>
+				  <figcaption>Level 2.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="26.png" width="400px"/>
-				  <figcaption>Mesh, smoothing.</figcaption>
+				  <figcaption>Level 3.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="29.png" width="400px"/>
-				  <figcaption>No mesh, no smoothing.</figcaption>
+				  <figcaption>Pre-processed Cube.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="30.png" width="400px"/>
-				  <figcaption>Mesh, no smoothing.</figcaption>
+				  <figcaption>Level 1.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="31.png" width="400px"/>
-				  <figcaption>No mesh, smoothing.</figcaption>
+				  <figcaption>Level 2.</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="32.png" width="400px"/>
-				  <figcaption>Mesh, smoothing.</figcaption>
+				  <figcaption>Level 3.</figcaption>
 				</td>
 			  </tr>
 			</table>
