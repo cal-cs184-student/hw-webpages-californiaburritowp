@@ -95,19 +95,74 @@
 			</table>
 		</div>
 
-		<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
-		<p>To extend de Casteljau’s algorithm to a Bezier surface, we essentially run the single parameter variation twice, now needing two parameters: u and v, and a n x n control grid instead of just parameter t and n control points. Using the de Casteljau algorithm as described in part 1, each row of points in the control grid forms its own Bezier curve based on parameter u. Applying the de Casteljau algorithm to the n rows for any given value of u gives us n intermediate points, which can then be inputted again into algorithm using parameter v to find a single point in the Bezier surface. Just like before, calculating the values created by adjusting our parameters between 0 and 1 will then give us all the points on our Bezier surface. 
+		<h3>Part 2: Bounding Volume Hierarchy</h3>
+		<p> My BVH construction algorithm recursively subdivides the set of primitives; each call, it finds 
+			the Bounding Box of the current set of primitives and selects the longest axis for division. 
+			Then, it calculates the heuristic: it averages the centroids of the primitives along
+			that axis, setting the split point to that average to partition the set into even groups.
 		</p>
-		<p>To implement this, I modified evaluateStep, evaluate1D, and evaluate. </p>
-		<p>First, evaluateStep does essentially the same thing as in task 1: that is, it linearly interpolates n points on parameter t to return n – 1 points.
-		Then, evaluate1D recursively applies evaluateStep to n points to find the single remaining point from a given value of the parameter t.
-		Last, evaluate calls evaluate1D on each row using parameter u, then calls evaluate1D on the resulting n points using parameter v to return a point on the Bezier surface.</p>
-		<p>See below for a teapot evaluated by my implementation of Bezier surfaces.</p>
-		<figure>
-			<img src="8.png" alt="Teapot" style="width:50%"/>
-			<figcaption>"...short and stout..."</figcaption>
-		</figure>
 		
+		<p>To compare runtimes, I have attached screenshots of the runtimes and rendering of a few medium sized scenes below. 
+		My implementation rendered Maxplanck.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
+		It rendered Peter.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
+		It rendered Beast.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
+		</p>
+		
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="4.png" width="400px"/>
+				  <figcaption>MaxPlanck</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="5.png" width="400px"/>
+				  <figcaption>MaxPlanck no BVH Runtime</figcaption>
+				</td>
+			  </tr><tr>
+				<td style="text-align: center;">
+				  <img src="6.png" width="400px"/>
+				  <figcaption>Peter</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="7.png" width="400px"/>
+				  <figcaption>Peter no BVH runtime</figcaption>
+				</td>
+			  </tr><tr>
+				<td style="text-align: center;">
+				  <img src="8.png" width="400px"/>
+				  <figcaption>Beast</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="9.png" width="400px"/>
+				  <figcaption>Beast no BVH runtime</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		
+		<p> Below are a few screenshots of some large images rendered using BVH acceleration. </p>
+		
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="10.png" width="400px"/>
+				  <figcaption>Wall-e</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="11.png" width="400px"/>
+				  <figcaption>CBLucy</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="12.png" width="400px"/>
+				  <figcaption>CBdragon</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
