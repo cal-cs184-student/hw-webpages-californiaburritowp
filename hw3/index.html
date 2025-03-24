@@ -38,8 +38,8 @@
 		
 
 		<figure>
-			<img src="teapot.png" alt="Teapot" style="width:50%"/>
-			<figcaption>"I'm a little teapot!"</figcaption>
+			<img src="cornell.png" alt="cornell" style="width:50%"/>
+			<figcaption>"Welcome to Wonderland"</figcaption>
 		</figure>
 
 		<!--
@@ -47,7 +47,9 @@
 		-->
 
 		<h2>Overview</h2>
-		<p>This write-up details my implementation of several algorithms and techniques in order to better render and work with triangle mesh objects,
+		<p>This write-up details my implementation of 
+			
+			several algorithms and techniques in order to better render and work with triangle mesh objects,
 			as well as the challenges I encountered while coding and their solutions. Some focuses were using Bezier curves to represent curved shapes, 
 			Phong shading to improve quality, and mesh processing functions like flipping, splitting, and upsampling for various other purposes.
 		</p>
@@ -102,40 +104,42 @@
 			that axis, setting the split point to that average to partition the set into even groups.
 		</p>
 		
-		<p>To compare runtimes, I have attached screenshots of the runtimes and rendering of a few medium sized scenes below. 
-		My implementation rendered Maxplanck.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
-		It rendered Peter.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
-		It rendered Beast.dae in TODOLATER seconds without BVH acceleration, TODOLATER seconds with it.
+		<p>To compare runtimes, I have detailed the rendering runtimes of a few medium sized scenes.
+		My implementation rendered Maxplanck.dae in 626.3842s seconds without BVH acceleration, 0.1632 seconds with it.
+		It rendered Peter.dae in 452.2540 seconds without BVH acceleration, 0.1111 sec seconds with it.
+		It rendered Beast.dae in 642.2554 seconds without BVH acceleration, 0.1393 seconds with it. As you can see from the numbers, 
+		the BVH acceleration speeds up the rendering process by around 4000 times, bringing an otherwise impractically long
+		rendering process significantly closer to one we might be able to use in something like video games.
 		</p>
 		
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="4.png" width="400px"/>
-				  <figcaption>MaxPlanck</figcaption>
+				  <img src="52.png" width="400px"/>
+				  <figcaption>MaxPlanck BVH: 0.1632 sec </figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="5.png" width="400px"/>
-				  <figcaption>MaxPlanck no BVH Runtime</figcaption>
+				  <figcaption>MaxPlanck no BVH: 626.3842s </figcaption>
 				</td>
 			  </tr><tr>
 				<td style="text-align: center;">
-				  <img src="6.png" width="400px"/>
-				  <figcaption>Peter</figcaption>
+				  <img src="72.png" width="400px"/>
+				  <figcaption>Peter BVH: 0.1111 sec </figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="7.png" width="400px"/>
-				  <figcaption>Peter no BVH runtime</figcaption>
+				  <figcaption>Peter no BVH: 452.2540 sec</figcaption>
 				</td>
 			  </tr><tr>
 				<td style="text-align: center;">
-				  <img src="8.png" width="400px"/>
-				  <figcaption>Beast</figcaption>
+				  <img src="92.png" width="400px"/>
+				  <figcaption>Beast BVH: 0.1393 sec</figcaption>
 				</td>
 				<td style="text-align: center;">
 				  <img src="9.png" width="400px"/>
-				  <figcaption>Beast no BVH runtime</figcaption>
+				  <figcaption>Beast no BVH: 642.2554 sec</figcaption>
 				</td>
 			  </tr>
 			</table>
