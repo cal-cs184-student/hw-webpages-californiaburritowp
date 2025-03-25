@@ -47,24 +47,20 @@
 		-->
 
 		<h2>Overview</h2>
-		<p>This write-up details my implementation of 
-			
-			several algorithms and techniques in order to better render and work with triangle mesh objects,
-			as well as the challenges I encountered while coding and their solutions. Some focuses were using Bezier curves to represent curved shapes, 
-			Phong shading to improve quality, and mesh processing functions like flipping, splitting, and upsampling for various other purposes.
+		<p>This write-up details my implementation of several algorithms and programs to render scenes both in a more efficient and physically accurate manner.
+			In Part 1, I implemented ray generation and primitive intersections and verified the basics with normal shading on small .dae files. In Part 2, I 
+			built a BVH using a splitting heuristic to accelerate my intersection tests for complex scenes and demonstrated its significant rendering time benefits. 
+			For Part 3, I implemented two direct lighting techniques (uniform hemisphere sampling and importance sampling), and found that importance sampling 
+			produces lower noise in soft shadows when varying the number of light rays. In Part 4, I extended the renderer to include global illumination by 
+			recursively tracing indirect bounces using BSDF sampling and Russian Roulette termination, demonstrating how higher-order bounces contribute to more realistic lighting. 
+			Finally, Part 5 introduced adaptive sampling, which adjusts the sample rate per pixel dynamically based on local variance to reduce noise 
+			without excessive computation.
+
+
 		</p>
-		<p>For the Bezier curve and surface tasks, I implemented de Casteljau’s algorithm to recursively evaluate control points and generate 
-			smooth curves and surfaces. In the mesh processing tasks, I implemented area-weighted vertex normals to achieve smoother (Phong) shading, 
-			along with mesh modification functions such as edge flips and edge splits. The loop subdivision task required splitting edges, flipping necessary edges, 
-			and updating vertex positions to refine the mesh. 
-		</p>
-		<p> The major challenges I encountered were in debugging and sometimes in fully understanding the intended function of the algorithms I was implementing. 
-			Carefully structuring the recursive steps and my variable names, as well as splitting up pieces of algorithms and checking pointers while running the 
-			program helped me to overcome these issues.
-        </p> 
-        <p>Through this homework, I deepened my understanding of recursive interpolation, half-edge data structures, mesh processing, and subdivision techniques 
-			used commonly in computer graphics. The hands-on experience with these algorithms also reinforced my importance of precision and careful debugging, 
-			improving my coding process.
+		<p>I learned a lot about how realistic representations of real world lighting in graphics work through this assignment. Unfortunately, I struggled a lot with
+			debugging and, as a result, time to complete the assignment itself, and did not end up being able to properly render all the images or complete parts 4 and 5.
+			For the time I did spend making progress on the project, I did learn a lot about rendering optimizations. 
 		</p>
         
         
@@ -109,41 +105,11 @@
 		It rendered Peter.dae in 452.2540 seconds without BVH acceleration, 0.1111 sec seconds with it.
 		It rendered Beast.dae in 642.2554 seconds without BVH acceleration, 0.1393 seconds with it. As you can see from the numbers, 
 		the BVH acceleration speeds up the rendering process by around 4000 times, bringing an otherwise impractically long
-		rendering process significantly closer to one we might be able to use in something like video games.
+		rendering process significantly closer to one we might be able to use in something like video games. This large result comes from the
+		fact that, without some sort of acceleration similar to the BVH we used, all primitives are being checked for intersection with
+		each ray that is used to render each pixel. With the optimization, we narrow down which primitives need to be checked first,
+		saving time exponentially.
 		</p>
-		
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="52.png" width="400px"/>
-				  <figcaption>MaxPlanck BVH: 0.1632 sec </figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="5.png" width="400px"/>
-				  <figcaption>MaxPlanck no BVH: 626.3842s </figcaption>
-				</td>
-			  </tr><tr>
-				<td style="text-align: center;">
-				  <img src="72.png" width="400px"/>
-				  <figcaption>Peter BVH: 0.1111 sec </figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="7.png" width="400px"/>
-				  <figcaption>Peter no BVH: 452.2540 sec</figcaption>
-				</td>
-			  </tr><tr>
-				<td style="text-align: center;">
-				  <img src="92.png" width="400px"/>
-				  <figcaption>Beast BVH: 0.1393 sec</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="9.png" width="400px"/>
-				  <figcaption>Beast no BVH: 642.2554 sec</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
 		
 		<p> Below are a few screenshots of some large images rendered using BVH acceleration. </p>
 		
@@ -168,201 +134,109 @@
 			</table>
 		</div>
 
-
-		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
-
-		<h3>Part 3: Area-weighted vertex normals</h3>
-		To implement the area-weighted vertex normal, I edited the Vertex::normal() function to take the area-weighted average of neighboring triangle normals, then normalizing that average. 
-		<p>In order to do this, I initialized a norma sumNormal to (0,0,0), then looped through the halfedges rooted at the current vertex. For each halfedge, I iterated through its face’s vertices in counter clockwise order using calls to ->next() and ->vertex(), taking their positions to calculate the face’s normal, which equals the cross product of the first two edge vectors. This normal was added to sumNormal. After the loop, I normalized the sumNormal to give the result: an area-weighted vertex normal.</p>
+		<h3>Part 3: Direct Illumination</h3>
+		<p>The importance sampling implementation directly samples the light sources rather than uniformly sampling directions over the hemisphere. 
+		For each light in the scene, the algorithm determines whether the light is a point light or an area light, then generates a direction from 
+		the hit point toward the light, along with the distance and PDF of the sample. A shadow ray is cast toward the light, and if no occlusion 
+		is found and the light is in front of the surface, the BSDF is evaluated. The contribution from the light is computed according to the reflection equation. 
+		Area lights are sampled multiple times and averaged, whereas point lights require only one sample. Importance sampling generally 
+		reduces noise since samples are concentrated on areas with higher levels of illumination.
+		</p>
+		<p>The hemisphere sampling implementation, on the other hand, uniformly samples directions over the hemisphere around a point of interest to 
+		find out how much light is reflected to the camera. The renderer uses UniformHemisphereSampler3D::get_sample() to generate a number of random 
+		directions over the hemisphere. For each direction, a shadow ray is cast from the hit point (offset by EPS_F to avoid self-intersections) to 
+		check for occlusion. If the ray reaches a light source without hitting any blocking primitives, the renderer evaluates the BSDF using the 
+		incoming (sampled) and outgoing directions in the reflection equation approximated with a Monte Carlo estimator, averaging the 
+		contributions over the total number of samples. This method is simple and general but can be inefficient because many sampled directions may not 
+		hit any light at all—resulting in higher noise in soft shadow regions.
+		</p>
+		<p> The below image examples (a mix of importance and hemisphere sampling) were generated with the same settings: 
+			"-t 8","-s 16","-l 32","-r 480 360" </p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="9.png" width="400px"/>
-				  <figcaption>No mesh; no smoothing.</figcaption>
+				  <img src="14I.png" width="400px"/>
+				  <figcaption>CBbunny: Importance Sampling.</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="10.png" width="400px"/>
-				  <figcaption>Mesh; no smoothing.</figcaption>
+				  <img src="14H.png" width="400px"/>
+				  <figcaption>CBbunny: Hemisphere Sampling.</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="11.png" width="400px"/>
-				  <figcaption>No mesh; smoothing.</figcaption>
+				  <img src="13I.png" width="400px"/>
+				  <figcaption>CBSpheres_lambertian: Importance Sampling.</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="12.png" width="400px"/>
-				  <figcaption>Mesh; smoothing.</figcaption>
+				  <img src="13H.png" width="400px"/>
+				  <figcaption>CBSpheres_lambertian: Hemisphere Sampling.</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
-
-		<h3>Part 4: Edge flip</h3>
-		<p>To implement edge flipping, I first asserted that the input was not a boundary edge. 
-			Then, I changed values for all the Iters and their pointers that should be affected by the flipping of an edge 
-			– that is, half-edges, vertices, and faces. By naming the vertices “a” through “d” (i.e. vA), and half-edges by vertex direction
-			 (i.e. heCA), I kept it easy enough to keep track at a glance of where pointers that needed to change would go. 
-			 Switching edge (b,c) to (a,d) gave a clear direction of how half edges would need their pointers ( ‘next’ and ‘face’ to be precise) changed, 
-			 and from there it was a matter of reassigning vertices and faces to the same names, but new values of halfEdges they were previously assigned to. 
-			</p>
-		<p>My debugging journey was, thankfully, mostly uneventful – aside from the time I fell asleep while coding. That left me with a couple stray characters typed around my function that I had to root out. Luckily, it was a fairly quick process.
-		</p>
-		<p>See screenshots below of a basic teapot, one with a few flipped edges, and one with many adjacent consecutively flipped edges.
-		</p>
+		<p> The below screenshots compare the noise levels in soft shadows when rendering with 1, 4, 16, and 64 light rays and with 1 sample per pixel using light sampling: 
+			 </p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="13.png" width="400px"/>
-				  <figcaption>Basic teapot.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="14.png" width="400px"/>
-				  <figcaption>A few flipped edges.</figcaption>
-				</td>
-			  </tr>
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="15.png" width="400px"/>
-				  <figcaption>After flipping more edges.</figcaption>
+				  <figcaption>CBbunny: 1 light ray.</figcaption>
 				</td>
-			  </tr>
-			</table>
-		</div>
-
-		<h3>Part 5: Edge split</h3>
-		<p>To implement the edge split operation, I looked at the graphic in the instructions and listed down every halfedge, vertex, edge, and face I would need to edit. By putting in use a good naming convention that referred to halfedges by the vertices they connected, and the rest of the structures by their corresponding halfedge (except vertices, they were named vA-vD, vM), I avoided getting confused while moving pointers around. 
-			Then, I created variables for each of the structures that was involved in the split, calling empty constructors for newly created ones. I (re)assigned all halfedges using setNeighbors(), then (re)assigned the edges, faces, and vertices to their respective halfedges as well. Finally, I returned the newly created vertex, vM.
-		</p>
-		<p>A combination of process I used to name each structure, meticulously combing through the logic of how new/old structures should look like, and lots of luck helped my implementation to work without any major debugging mishaps.
-		</p>
-		<p>Screenshots of a cube mesh before and after some edge splits, then of a new mesh before and after some edge flips, splits, and then (from another angle to showcase changes better) both, respectively:
-		</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
 				<td style="text-align: center;">
 				  <img src="16.png" width="400px"/>
-				  <figcaption>Base Cube.</figcaption>
+				  <figcaption>CBbunny: 4 light rays.</figcaption>
 				</td>
+			  </tr><tr>
 				<td style="text-align: center;">
 				  <img src="17.png" width="400px"/>
-				  <figcaption>Split on edge and face edges.</figcaption>
+				  <figcaption>CBbunny: 16 light rays.</figcaption>
 				</td>
-			  </tr>
-			  <tr>
 				<td style="text-align: center;">
 				  <img src="18.png" width="400px"/>
-				  <figcaption>Further splits.</figcaption>
+				  <figcaption>CBbunny: 32 light rays.</figcaption>
 				</td>
+			  </tr>
+			</table>
+		</div>
+		<p> Analysis: Comparing uniform hemisphere sampling to light sampling, both methods converge to the same physically correct 
+			solution. However, uniform hemisphere sampling often has higher noise for the same sample count because it spends 
+			many samples on directions that do not contribute significantly. Light sampling, on the other hand, “spends” its samples 
+			more efficiently since it focuses on directions most likely to carry significant radiance from the lights, leading to cleaner 
+			renders and faster convergence in most practical scenarios.</p>
+
+		<h3>Part 4: Global Illumination</h3>
+		<p>In our indirect lighting function, we first build a local coordinate system at the hit point and sample a new direction from the BSDF, 
+			then convert that sample to world space to form a new bounce ray. Then we apply Russian Roulette to probabilistically terminate the 
+			recursion—if the path survives, we normalize the recursive radiance contribution by the survival probability to keep the 
+			estimate unbiased. Finally, the function accumulates the direct lighting from the current bounce with the recursively computed indirect 
+			lighting, yielding the full multi-bounce contribution. 
+		</p>
+		<p>See screenshots below of some scenes rendered using a combination of our previous (direct) and indirect lighting.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
 				<td style="text-align: center;">
 				  <img src="19.png" width="400px"/>
-				  <figcaption>Base Cube again.</figcaption>
+				  <figcaption>Bench.</figcaption>
 				</td>
-			  </tr>
-			  <tr>
 				<td style="text-align: center;">
 				  <img src="20.png" width="400px"/>
-				  <figcaption>Some flips.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="21.png" width="400px"/>
-				  <figcaption>Some splits.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="22.png" width="400px"/>
-				  <figcaption>Some of both.</figcaption>
+				  <figcaption>Coil.</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
-
-
-		<h3>Part 6: Loop subdivision for mesh upsampling</h3>
-		<p>I implemented the Mesh Upsampling by closely following the steps laid out in the implementation notes. 
-			First, I calculated all the newPosition values of the original vertices, and marked their isNew = false. 
-			Then I set all old edges’ newPosition values and isNew values, splitting all the original edges and marking 
-			the new edges during the split, filling new vertices' values with the edge->newPosition. I followed that by 
-			flipping any new edges that connected new and old vertices together. Lastly, I updated all vertex’s positions to their newPosition value. 
-			</p><p>While debugging, I was very stuck on figuring out why few vertices wouldn’t have the correct position on every 
-			‘L’ key press. To figure out my issue, I went through the vertices, edges, and halfedges involved by selecting 
-			their data via the interface and checked that their pointer values were as intended. Using that process, I was 
-			able to find a small error in my edge flip function where one of the vertices had its halfedge pointer going to 
-			the twin of the correct halfedge.
+		<p> The rest of Part 4 I was unable to finish because I could not fix an issue where my brightness was constantly too high for scenes my implementation was rendering.
+			I thought putting the time to render such large files would be moot given I know my implementation is not fully correct anyways. But I did enjoy learning about the
+			process and I do think I gained a lot from doing this homework, ony I wish I had more time / it was assigned with midterms in mind.
 		</p>
-		<p>Loop subdivision smooths a mesh out, so the sharp corners and edges become increasingly rounded as loops of the 
-			algorithm are carried out. You can reduce this effect through extra splits to change how much the subdivision 
-			process can actually round a shape since a larger amount of the original face will remain in place. Compare the 
-			screenshots directly below – the face with several extra splits done on it keeps its shape much better than the 
-			untouched faces through the subdivision process.
-		</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="27.png" width="400px"/>
-				  <figcaption>Cube with many extra splits on ONE face.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="28.png" width="400px"/>
-				  <figcaption>Upsampled cube - you can see the split face is much flatter.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
-		<p>You can pre-process the cube to make it subdivide symmetrically. In this cube’s case, the way to do it is by splitting each face’s 
-		singular edge across into 4 symmetric edges so that the mesh’s edges have the same symmetry a cube does. This edge symmetry gives 
-		our loop subdivision a uniform, symmetric base to subdivide upon, which results in symmetric shapes even when subdivided. Compare 
-		the sequential sets of screenshots below with each other to see the difference.
-		</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="23.png" width="400px"/>
-				  <figcaption>Unprocessed Cube.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="24.png" width="400px"/>
-				  <figcaption>Level 1.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="25.png" width="400px"/>
-				  <figcaption>Level 2.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="26.png" width="400px"/>
-				  <figcaption>Level 3.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="29.png" width="400px"/>
-				  <figcaption>Pre-processed Cube.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="30.png" width="400px"/>
-				  <figcaption>Level 1.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="31.png" width="400px"/>
-				  <figcaption>Level 2.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="32.png" width="400px"/>
-				  <figcaption>Level 3.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
+		<h3>Part 5: Adaptive Sampling</h3>
+		<p> I did not make it to this part of the homework due to my inability to figure out my issues with Part 4 in the time allotted.</p>
+		
 		
 	</body>
 </html>
