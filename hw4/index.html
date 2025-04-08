@@ -28,19 +28,18 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 4 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">By: Nicholas Kiani </div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-californiaburritowp/">cal-cs184-student.github.io/hw-webpages-californiaburritowp/</a>
 
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
 
 		<figure>
 			<img src="clothsim.png" alt="Cloth draped over sphere" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
+			<figcaption> It's "cloth"!</figcaption>
 		</figure>
 
 		<!--
@@ -48,42 +47,163 @@
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		<p>This write-up details my implementation of several algorithms and techniques in order to better render and work with triangle mesh objects,
+			as well as the challenges I encountered while coding and their solutions. Some focuses were using Bezier curves to represent curved shapes, 
+			Phong shading to improve quality, and mesh processing functions like flipping, splitting, and upsampling for various other purposes.
+		</p>
+		<p>For the Bezier curve and surface tasks, I implemented de Casteljau’s algorithm to recursively evaluate control points and generate 
+			smooth curves and surfaces. In the mesh processing tasks, I implemented area-weighted vertex normals to achieve smoother (Phong) shading, 
+			along with mesh modification functions such as edge flips and edge splits. The loop subdivision task required splitting edges, flipping necessary edges, 
+			and updating vertex positions to refine the mesh. 
+		</p>
+		<p> The major challenges I encountered were in debugging and sometimes in fully understanding the intended function of the algorithms I was implementing. 
+			Carefully structuring the recursive steps and my variable names, as well as splitting up pieces of algorithms and checking pointers while running the 
+			program helped me to overcome these issues.
+        </p> 
+        <p>Through this homework, I deepened my understanding of recursive interpolation, half-edge data structures, mesh processing, and subdivision techniques 
+			used commonly in computer graphics. The hands-on experience with these algorithms also reinforced my importance of precision and careful debugging, 
+			improving my coding process.
+		</p>
+
 
 		<h2>Part 1: Masses and springs</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Here is a brief overview of the mass and spring simulation. It uses a grid of masses connected by springs 
+        to create a cloth-like effect: The masses are represented as points in 3D space, while the springs are represented as lines 
+        connecting the masses. See below some images of the basic wireframe created by initializing just the masses and springs without applying
+        any forces.
 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="1.png" width="400px"/>
+				  <figcaption>Angle 1</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="2.png" width="400px"/>
+				  <figcaption>Angle 2</figcaption>
 				</td>
 			  </tr>
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="3.png" width="400px"/>
+				  <figcaption>Angle 3</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="4.png" width="400px"/>
+				  <figcaption>Without shearing constraints</figcaption>
+				</td>
+			  </tr>
+              <tr>
+				<td style="text-align: center;">
+				  <img src="5.png" width="400px"/>
+				  <figcaption>With all constraints</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
 
 		<h2>Part 2: Simulation via numerical integration</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		Cloth dynamics were implemented by computing external and spring forces, integrating point mass motion with a damped Verlet algorithm, 
+		and enforcing spring length constraints to prevent excessive stretching.
+		<p>
+		Some topics of interest for this section: how do alterations of the parameters spring constant, density, and damping affect the cloth simulation?
+		</p>>
+		<p>Spring Constant (ks): </p>
+		<p>Low ks: Cloth behaves very soft, draping easily but with little structural integrity.
+		High ks: Cloth holds shape rigidly but may oscillate or appear unnaturally stiff if too high.
+		</p>
+		<p>Density:</p>
+		<p>Low density: Cloth is light, moves quickly, and is more prone to flutter.
+		High density: Cloth is heavy, sags under gravity, and moves with more inertia.
+		</p>
+		<p>Damping:</p>
+		<p>Low damping: Persistent oscillations and dynamic, bouncing motions occur.
+		High damping: Rapid energy loss results in a smooth, quickly settled cloth.
+		</p>
+
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="6.png" width="400px"/>
+				  <figcaption>Low Ks: Cloth hangs low, keeping little structural integrity</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="7.png" width="400px"/>
+				  <figcaption>High Ks: Too high; cloth oscillates rapidly and chaotically</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="8.png" width="400px"/>
+				  <figcaption>Low density: light cloth sits with little bend</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="9.png" width="400px"/>
+				  <figcaption>High density: heavy cloth sits much lower</figcaption>
+				</td>
+			  </tr>
+              <tr>
+				<td style="text-align: center;">
+				  <img src="10.png" width="400px"/>
+				  <figcaption>Low(no) damping: cloth has large persistent oscillations</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="11.png" width="400px"/>
+				  <figcaption>High damping: cloth is setting immediately without oscillation</figcaption>
+				</td>
+			  </tr><tr>
+				<td style="text-align: center;">
+				<img src="13.png" width="400px"/>
+				<figcaption>Base parameters Pinned2 </figcaption>
+			  </td>
+				<td style="text-align: center;">
+				  <img src="12.png" width="400px"/>
+				  <figcaption>Resting scene Pinned4</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h2>Part 3: Handling collisions with other objects</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p> For spheres, a collision is defined as when the position of a pointmass is inside the sphere. If this occured,
+		I computed the penetration by measuring the distance from the sphere’s center to the point mass and then 
+		repositioned the mass to the sphere’s surface - using a tangent point scaled by (1 – friction)
+		</p>
+		<p> For planes, a collision is defined as when a point mass crosses the surface between its last and current positions. 
+		I repositioned each point mass, comparing signed distances from a reference point on the plane and interpolating along
+		the motion vector to compute the intersection point, then adjusting the position to this intersection with a small offset and friction scaling.
+		</p>
+		
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="14.png" width="400px"/>
+				  <figcaption>Cloth-sphere collision (Ks = 500)</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="15.png" width="400px"/>
+				  <figcaption>Cloth-sphere collision (Ks = 5000)</figcaption>
+				</td>
+			  </tr>
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="16.png" width="400px"/>
+				  <figcaption>Cloth-sphere collision (Ks = 50000)</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p> As can be seen above, smaller spring coefficient equates to more floppy dangling from the sphere. 
+			Large ks results in the internal force from the springs holding the cloth in a more rigid fashion, keeping more of its shape.
+		</p>
+		<figure>
+			<img src="17.png" alt="Cloth on plane" style="width:100%"/>
+			<figcaption> Cloth-plane collision</figcaption>
+		</figure>
 
 		<h2>Part 4: Handling self-collisions</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
